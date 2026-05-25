@@ -1,0 +1,35 @@
+x-airflow-common: &airflow-common
+  build:
+    context: ..
+    args:
+      EXTRA_REQUIREMENTS: ${EXTRA_REQUIREMENTS}
+  env_file:
+    - ../.env
+  volumes:
+    - airflow_logs:/opt/airflow/logs
+    - airflow_config:/opt/airflow/config
+    - airflow_plugins:/opt/airflow/plugins
+    - ../pipelines:/opt/pipelines
+  user: "${AIRFLOW_UID:-50000}:0"
+
+services:
+  airflow-worker:
+    <<: *airflow-common
+    hostname: ${CELERY_HOSTNAME}
+    command: airflow celery worker --autoscale 4,1 -H ${CELERY_HOSTNAME} -q ${QUEUES}
+    healthcheck:
+      test: ["CMD-SHELL", "celery --app airflow.providers.celery.executors.celery_executor.app inspect ping -d \"celery@$${HOSTNAME}\" || celery --app airflow.executors.celery_executor.app inspect ping -d \"celery@$${HOSTNAME}\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    mem_limit: 1g
+    environment:
+      DUMB_INIT_SETSID: "0"
+      PYTHONPATH: /opt/pipelines
+    restart: always
+
+volumes:
+  airflow_logs:
+  airflow_config:
+  airflow_plugins:

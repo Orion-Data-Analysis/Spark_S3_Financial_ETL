@@ -1,0 +1,16 @@
+.env
+*.env
+**/.env
+**/*.env
+
+# Local runtime data
+architecture/nginx-proxy-manager/data/
+architecture/nginx-proxy-manager/letsencrypt/
+architecture/spark/logs/
+architecture/spark/work/
+architecture/spark/runtime/
+
+# Python/cache noise
+__pycache__/
+*.py[cod]
+.pytest_cache/

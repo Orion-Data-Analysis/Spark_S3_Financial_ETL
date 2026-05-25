@@ -1,0 +1,27 @@
+services:
+  spark-master:
+    image: ${SPARK_IMAGE}
+    container_name: spark-master
+    hostname: spark-master
+    command:
+      - /opt/spark/bin/spark-class
+      - org.apache.spark.deploy.master.Master
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "${SPARK_MASTER_PORT}"
+      - --webui-port
+      - "${SPARK_MASTER_WEBUI_PORT}"
+    ports:
+      - "${SPARK_MASTER_PORT}:${SPARK_MASTER_PORT}"
+      - "${SPARK_MASTER_WEBUI_PORT}:${SPARK_MASTER_WEBUI_PORT}"
+    volumes:
+      - ${SPARK_LOGS_PATH}:/opt/spark/logs
+    networks:
+      - spark-net
+    restart: ${RESTART_POLICY}
+
+networks:
+  spark-net:
+    name: ${SPARK_NETWORK}
+    external: true

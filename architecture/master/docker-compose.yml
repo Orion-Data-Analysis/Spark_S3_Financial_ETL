@@ -1,0 +1,98 @@
+x-airflow-common: &airflow-common
+  build:
+    context: ..
+    args:
+      EXTRA_REQUIREMENTS: ${EXTRA_REQUIREMENTS}
+  env_file:
+    - ../.env
+  volumes:
+    - airflow_logs:/opt/airflow/logs
+    - airflow_config:/opt/airflow/config
+    - airflow_plugins:/opt/airflow/plugins
+    - ../pipelines:/opt/pipelines
+  user: "${AIRFLOW_UID:-50000}:0"
+
+services:
+
+  airflow-apiserver:
+    environment:
+      - PYTHONPATH=${PYTHONPATH}
+    <<: *airflow-common
+    command: airflow api-server
+    ports:
+      - "8080:8080"
+    restart: always
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    environment:
+      - PYTHONPATH=${PYTHONPATH}
+    <<: *airflow-common
+    command: scheduler
+    restart: always
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-dag-processor:
+    environment:
+      - PYTHONPATH=${PYTHONPATH}
+    <<: *airflow-common
+    command: dag-processor
+    restart: always
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-triggerer:
+    environment:
+      - PYTHONPATH=${PYTHONPATH}
+    <<: *airflow-common
+    command: triggerer
+    restart: always
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-init:
+    environment:
+      - PYTHONPATH=${PYTHONPATH}
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    user: "0:0"
+    command:
+      - -c
+      - |
+        mkdir -p /opt/airflow/{logs,dags,plugins,config}
+        chown -R "${AIRFLOW_UID}:0" /opt/airflow/
+        /entrypoint airflow db migrate
+
+  airflow-cli:
+    environment:
+      - PYTHONPATH=${PYTHONPATH}
+    <<: *airflow-common
+    profiles:
+      - debug
+    command:
+      - bash
+      - -c
+      - airflow
+
+  flower:
+    environment:
+      - PYTHONPATH=${PYTHONPATH}
+    <<: *airflow-common
+    command: celery flower
+    ports:
+      - "5555:5555"
+    restart: always
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+volumes:
+  airflow_logs:
+  airflow_config:
+  airflow_plugins:

@@ -23,7 +23,7 @@ AIRFLOW__CORE__AUTH_MANAGER=airflow.providers.fab.auth_manager.fab_auth_manager.
 # =========================
 # DATABASE
 # =========================
-AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://coder-ra-c6:Riwi2026**@51.222.142.204:5432/orion_db
+AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://coder-ra-c6:Riwi2026**@23.0.1.199:5432/orion_db
 AIRFLOW__DATABASE__SQL_ALCHEMY_POOL_SIZE=5
 AIRFLOW__DATABASE__SQL_ALCHEMY_MAX_OVERFLOW=10
 
@@ -31,7 +31,7 @@ AIRFLOW__DATABASE__SQL_ALCHEMY_MAX_OVERFLOW=10
 # CELERY
 # =========================
 AIRFLOW__CELERY__BROKER_URL=amqp://airflow:airflow@23.0.2.75:5672//
-AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql+psycopg2://coder-ra-c6:Riwi2026**@51.222.142.204:5432/orion_db
+AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql+psycopg2://coder-ra-c6:Riwi2026**@23.0.1.199:5432/orion_db
 
 # =========================
 # API / WEB
@@ -69,9 +69,23 @@ _AIRFLOW_WWW_USER_ROLE=Admin
 # LOGGING
 # =========================
 AIRFLOW__LOGGING__REMOTE_LOGGING=true
-AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER=s3://orion-s3-395840094505-us-east-2-an/orion-logs
-AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID=my_s3_orion
+AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER=s3://orion-financial-crisis-data-395840094505-us-east-2-an/dev/financial_crisis/logs/airflow
+AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID=aws_orion_s3
 AIRFLOW__LOGGING__ENCRYPT_S3_LOGS=false
+
+# =========================
+# FINANCIAL DATA LAKE S3
+# =========================
+FINANCIAL_ENV=dev
+FINANCIAL_AWS_REGION=us-east-2
+FINANCIAL_S3_BUCKET=orion-financial-crisis-data-395840094505-us-east-2-an
+FINANCIAL_S3_DOMAIN=financial_crisis
+FINANCIAL_S3_BASE=s3://orion-financial-crisis-data-395840094505-us-east-2-an/dev/financial_crisis
+FINANCIAL_INPUT_PATH=s3://orion-financial-crisis-data-395840094505-us-east-2-an/dev/financial_crisis/landing
+FINANCIAL_DATA_LAKE_ROOT=s3://orion-financial-crisis-data-395840094505-us-east-2-an/dev/financial_crisis
+
+# Airflow AWS connection backed by the EC2 IAM Role. Do not add access keys here.
+AIRFLOW_CONN_AWS_ORION_S3={"conn_type":"aws","extra":{"region_name":"us-east-2"}}
 
 # =========================
 # EXTRA (solo si necesitas)

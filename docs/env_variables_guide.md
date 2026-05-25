@@ -23,7 +23,7 @@ A continuación, se explica cada bloque de tu archivo `.env` actual y qué máqu
 *   **`AIRFLOW__CORE__AUTH_MANAGER`**: Activa el gestor de usuarios estándar de Airflow (FAB - Flask App Builder).
 
 ### 🗄️ DATABASE (Base de Datos)
-*   **`AIRFLOW__DATABASE__SQL_ALCHEMY_CONN`**: La cadena de conexión a tu PostgreSQL externo (`51.222.142.204`). Aquí Airflow guarda todo: qué tareas fallaron, usuarios, permisos, etc.
+*   **`AIRFLOW__DATABASE__SQL_ALCHEMY_CONN`**: La cadena de conexión a tu PostgreSQL en la instancia proxy (`23.0.1.199`). Aquí Airflow guarda todo: qué tareas fallaron, usuarios, permisos, etc.
 
 ### 🐇 CELERY (Mensajería)
 *   **`AIRFLOW__CELERY__BROKER_URL`**: La dirección de tu **RabbitMQ** (`amqp://23.0.2.75:5672`). Es el "buzón de correos" donde el Master deja las tareas y los Workers las recogen.

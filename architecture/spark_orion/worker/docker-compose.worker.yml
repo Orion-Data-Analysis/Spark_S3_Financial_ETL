@@ -1,6 +1,9 @@
 services:
   spark-worker:
     image: ${SPARK_IMAGE}
+    build:
+      context: ..
+      dockerfile: Dockerfile
     container_name: spark-worker-${WORKER_ID}
     hostname: spark-worker-${WORKER_ID}
     command:

@@ -97,7 +97,7 @@ AIRFLOW_CONN_AWS_ORION_S3={"conn_type":"aws","extra":{"region_name":"us-east-2"}
 # SPARK STANDALONE
 # =========================
 # Este mismo .env lo pueden usar Airflow Master + Spark Master y Airflow Workers + Spark Workers.
-SPARK_IMAGE=apache/spark:3.5.0
+SPARK_IMAGE=orion/spark-s3a:3.5.0
 SPARK_NETWORK=spark-net
 
 # Para el contenedor del Spark Master en la EC2 de Airflow Master.

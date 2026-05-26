@@ -1,6 +1,9 @@
 services:
   spark-master:
     image: ${SPARK_IMAGE}
+    build:
+      context: ..
+      dockerfile: Dockerfile
     container_name: spark-master
     hostname: spark-master
     command:

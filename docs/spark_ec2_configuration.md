@@ -231,10 +231,10 @@ Si ya copiaste el proyecto por `scp`, entra a la carpeta correspondiente.
 
 ### 6.4 Configurar `.env` del Spark Master
 
-En `architecture/spark/.env`, para el master deja:
+En `architecture/.env`, para el master deja:
 
 ```env
-SPARK_IMAGE=bitnami/spark:3.5.0
+SPARK_IMAGE=orion/spark-s3a:3.5.0
 SPARK_NETWORK=spark-net
 
 SPARK_MASTER_HOST=spark-master
@@ -262,11 +262,11 @@ Desde la raiz del proyecto:
 
 ```bash
 docker network create spark-net
-mkdir -p architecture/spark/runtime/logs architecture/spark/runtime/work
+mkdir -p architecture/spark_orion/runtime/logs architecture/spark_orion/runtime/work
 
 docker compose \
-  --env-file architecture/spark/.env \
-  -f architecture/spark/master/docker-compose.master.yml \
+  --env-file architecture/.env \
+  -f architecture/spark_orion/master/docker-compose.master.yml \
   up -d
 ```
 
@@ -318,7 +318,7 @@ En cada worker, el valor mas importante es `SPARK_MASTER_HOST`.
 Si el worker esta en otra EC2, usa la **IP privada del Spark Master**:
 
 ```env
-SPARK_IMAGE=bitnami/spark:3.5.0
+SPARK_IMAGE=orion/spark-s3a:3.5.0
 SPARK_NETWORK=spark-net
 
 SPARK_MASTER_HOST=10.0.2.50
@@ -356,11 +356,11 @@ Desde la raiz del proyecto en cada worker:
 
 ```bash
 docker network create spark-net
-mkdir -p architecture/spark/runtime/logs architecture/spark/runtime/work
+mkdir -p architecture/spark_orion/runtime/logs architecture/spark_orion/runtime/work
 
 docker compose \
-  --env-file architecture/spark/.env \
-  -f architecture/spark/worker/docker-compose.worker.yml \
+  --env-file architecture/.env \
+  -f architecture/spark_orion/worker/docker-compose.worker.yml \
   up -d
 ```
 

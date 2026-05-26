@@ -197,9 +197,9 @@ Como Desarrollador de Pipelines, quiero conectar la plataforma Apache Airflow co
 Como Ingeniero de Big Data, de modo que el motor de Apache Spark pueda leer formatos origen en `landing` y persistir la data procesada en la capa `raw` en formato Parquet, necesito integrar las librerías nativas de Hadoop AWS para dar soporte al protocolo de alta eficiencia de sistemas de archivos distribuidos `s3a://`.
 
 ### 📋 Criterios de Aceptación (Definition of Done)
-- [ ] Los paquetes java binarios `.jar` de interconectividad de AWS están instalados en el directorio nativo de dependencias de Spark.
-- [ ] El constructor del `SparkSession` hereda de forma obligatoria las propiedades del perfil de instancia de AWS.
-- [ ] No existen excepciones en tiempo de ejecución asociadas a clases no encontradas (`ClassNotFoundException`) del ecosistema Hadoop Filesystem.
+- [x] Los paquetes java binarios `.jar` de interconectividad de AWS están instalados en el directorio nativo de dependencias de Spark.
+- [x] El constructor del `SparkSession` hereda de forma obligatoria las propiedades del perfil de instancia de AWS.
+- [ ] No existen excepciones en tiempo de ejecución asociadas a clases no encontradas (`ClassNotFoundException`) del ecosistema Hadoop Filesystem. Pendiente validar en EC2 con `docker compose up --build` y un job `spark-submit`.
 
 ### 🛠️ Subtareas Técnicas Detalladas
 

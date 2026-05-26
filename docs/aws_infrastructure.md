@@ -250,10 +250,10 @@ spark_orion/master/docker-compose.master.yml
 spark_orion/worker/docker-compose.worker.yml
 ```
 
-La imagen usada es la oficial de Apache:
+La imagen usada es una imagen del proyecto basada en Apache Spark 3.5.0 con soporte S3A:
 
 ```env
-SPARK_IMAGE=apache/spark:3.5.0
+SPARK_IMAGE=orion/spark-s3a:3.5.0
 ```
 
 ### 5.1 Variables Spark en el `.env`
@@ -261,7 +261,7 @@ SPARK_IMAGE=apache/spark:3.5.0
 El archivo `.env` principal debe estar en la raiz de `Done-data-platform`.
 
 ```env
-SPARK_IMAGE=apache/spark:3.5.0
+SPARK_IMAGE=orion/spark-s3a:3.5.0
 SPARK_NETWORK=spark-net
 
 SPARK_MASTER_BIND_HOST=spark-master
@@ -418,7 +418,7 @@ Activa **Websockets Support** en los proxy hosts donde aplique.
 2. `SG_MASTER` permite `8082` desde `SG_PROXY`.
 3. `SG_WORKERS` permite `8081` desde `SG_PROXY`.
 4. `SG_WORKERS` permite All TCP desde `SG_MASTER` y `SG_WORKERS`.
-5. El `.env` usa `SPARK_IMAGE=apache/spark:3.5.0`.
+5. El `.env` usa `SPARK_IMAGE=orion/spark-s3a:3.5.0`.
 6. `SPARK_MASTER_CONNECT_HOST` es la IP privada de `airflow-master`.
 7. Existe la red Docker en cada EC2:
 

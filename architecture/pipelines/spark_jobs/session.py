@@ -1,5 +1,5 @@
 import os
-from typing import Mapping
+from typing import Mapping, Optional
 
 from pyspark.sql import SparkSession
 
@@ -9,7 +9,7 @@ DEFAULT_APP_NAME = "Orion-Financial-Crisis-DataLake-Ingestion"
 
 def build_spark_session(
     app_name: str = DEFAULT_APP_NAME,
-    extra_conf: Mapping[str, str] | None = None,
+    extra_conf: Optional[Mapping[str, str]] = None,
 ) -> SparkSession:
     region = os.getenv("FINANCIAL_AWS_REGION", "us-east-2")
     endpoint = os.getenv("SPARK_S3A_ENDPOINT", f"s3.{region}.amazonaws.com")

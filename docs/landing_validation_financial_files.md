@@ -17,6 +17,12 @@ Tambien se reutiliza dentro del flujo completo:
 architecture/pipelines/dags/financial_crisis_kaggle_to_raw.py
 ```
 
+Para la operacion completa en Airflow y EC2, revisar:
+
+```text
+docs/airflow_kaggle_to_raw_runbook.md
+```
+
 ## Archivos obligatorios
 
 | Source system | Dataset | Archivo |

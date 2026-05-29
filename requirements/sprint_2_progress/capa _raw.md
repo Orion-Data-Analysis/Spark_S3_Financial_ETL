@@ -206,12 +206,18 @@ validate_landing_files
 
 Flujo completo automatizado definido:
 
-download_kaggle_sources
-  -> unzip_kaggle_sources
-  -> upload_sources_to_landing
+download_unzip_upload_sources_to_landing
   -> generate_landing_manifest
   -> validate_landing_files
   -> spark_landing_to_raw
+
+Nota de implementacion para CeleryExecutor:
+
+En el DAG final se agruparon descarga, descompresion y carga a S3 en una sola tarea:
+
+download_unzip_upload_sources_to_landing
+
+Esto evita depender de rutas locales `/tmp` entre workers distintos.
 
 DAG principal:
 
@@ -224,3 +230,7 @@ architecture/pipelines/spark_jobs/landing_to_raw_financial_crisis.py
 Documentacion del flujo completo:
 
 docs/kaggle_to_raw_financial_pipeline.md
+
+Runbook operativo de Airflow/EC2:
+
+docs/airflow_kaggle_to_raw_runbook.md

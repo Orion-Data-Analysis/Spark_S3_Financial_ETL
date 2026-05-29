@@ -20,6 +20,12 @@ architecture/pipelines/spark_jobs/landing_to_raw_financial_crisis.py
 architecture/pipelines/dags/common/financial_landing.py
 ```
 
+Runbook operativo con pasos de Airflow, EC2, JSON de ejecucion y troubleshooting:
+
+```text
+docs/airflow_kaggle_to_raw_runbook.md
+```
+
 ## DAG principal
 
 El DAG que ejecuta el flujo completo es:
@@ -33,13 +39,13 @@ Tareas:
 ```text
 build_landing_context
   -> configure_kaggle_credentials
-  -> download_kaggle_sources
-  -> unzip_kaggle_sources
-  -> upload_sources_to_landing
+  -> download_unzip_upload_sources_to_landing
   -> generate_landing_manifest
   -> validate_landing_files
   -> spark_landing_to_raw
 ```
+
+La descarga, descompresion y carga a S3 se ejecutan en una sola tarea para evitar pasar rutas locales `/tmp` entre diferentes workers Celery.
 
 ## Fuentes descargadas
 

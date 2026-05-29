@@ -82,9 +82,13 @@ def configure_kaggle_credentials() -> None:
     os.chmod(kaggle_json, 0o600)
 
 
-def download_kaggle_sources(**context) -> dict:
+def download_unzip_upload_sources_to_landing(**context) -> list[dict]:
+    configure_kaggle_credentials()
+
     landing_context = context["ti"].xcom_pull(task_ids="build_landing_context")
     work_dir = Path(landing_context["work_dir"])
+    ingestion_date = landing_context["ingestion_date"]
+    landing_run_id = landing_context["landing_run_id"]
 
     if work_dir.exists():
         shutil.rmtree(work_dir)
@@ -92,82 +96,51 @@ def download_kaggle_sources(**context) -> dict:
 
     source_dirs = {}
     downloaded_sources = set()
-
-    for expected_file in EXPECTED_LANDING_FILES:
-        source_system = expected_file["source_system"]
-        if source_system in downloaded_sources:
-            continue
-
-        source_dir = work_dir / source_system
-        source_dir.mkdir(parents=True, exist_ok=True)
-        kaggle_source = expected_file["kaggle_source"]
-
-        if expected_file["kaggle_type"] == "competition":
-            command = [
-                "kaggle",
-                "competitions",
-                "download",
-                "-c",
-                kaggle_source,
-                "-p",
-                str(source_dir),
-                "--force",
-            ]
-        else:
-            command = [
-                "kaggle",
-                "datasets",
-                "download",
-                "-d",
-                kaggle_source,
-                "-p",
-                str(source_dir),
-                "--force",
-            ]
-
-        subprocess.run(command, check=True)
-        source_dirs[source_system] = str(source_dir)
-        downloaded_sources.add(source_system)
-
-    return source_dirs
-
-
-def unzip_kaggle_sources(**context) -> dict:
-    source_dirs = context["ti"].xcom_pull(task_ids="download_kaggle_sources")
-
-    for source_dir_text in source_dirs.values():
-        source_dir = Path(source_dir_text)
-        for zip_path in source_dir.glob("*.zip"):
-            with zipfile.ZipFile(zip_path, "r") as archive:
-                archive.extractall(source_dir)
-
-    return source_dirs
-
-
-def find_required_file(source_dir: Path, file_name: str) -> Path:
-    matches = list(source_dir.rglob(file_name))
-    if not matches:
-        raise AirflowFailException(
-            f"Required Kaggle file was not found after download/unzip. "
-            f"source_dir={source_dir} file_name={file_name}"
-        )
-
-    return matches[0]
-
-
-def upload_sources_to_landing(**context) -> list[dict]:
-    landing_context = context["ti"].xcom_pull(task_ids="build_landing_context")
-    source_dirs = context["ti"].xcom_pull(task_ids="unzip_kaggle_sources")
-    ingestion_date = landing_context["ingestion_date"]
-    landing_run_id = landing_context["landing_run_id"]
     s3_hook = S3Hook(aws_conn_id=AWS_CONN_ID)
-
     uploaded_files = []
 
     for expected_file in EXPECTED_LANDING_FILES:
         source_system = expected_file["source_system"]
+
+        source_dir = work_dir / source_system
+        source_dir.mkdir(parents=True, exist_ok=True)
+
+        if source_system not in downloaded_sources:
+            kaggle_source = expected_file["kaggle_source"]
+
+            if expected_file["kaggle_type"] == "competition":
+                command = [
+                    "kaggle",
+                    "competitions",
+                    "download",
+                    "-c",
+                    kaggle_source,
+                    "-p",
+                    str(source_dir),
+                    "--force",
+                ]
+            else:
+                command = [
+                    "kaggle",
+                    "datasets",
+                    "download",
+                    "-d",
+                    kaggle_source,
+                    "-p",
+                    str(source_dir),
+                    "--force",
+                ]
+
+            subprocess.run(command, check=True)
+            source_dirs[source_system] = str(source_dir)
+            downloaded_sources.add(source_system)
+
+            for zip_path in source_dir.glob("*.zip"):
+                with zipfile.ZipFile(zip_path, "r") as archive:
+                    archive.extractall(source_dir)
+
         file_name = expected_file["file_name"]
-        local_path = find_required_file(Path(source_dirs[source_system]), file_name)
+        local_path = find_required_file(source_dir, file_name)
         key = build_landing_key(source_system, ingestion_date, landing_run_id, file_name)
 
         s3_hook.load_file(
@@ -193,12 +166,24 @@ def upload_sources_to_landing(**context) -> list[dict]:
             }
         )
 
+    shutil.rmtree(work_dir, ignore_errors=True)
     return uploaded_files
+
+
+def find_required_file(source_dir: Path, file_name: str) -> Path:
+    matches = list(source_dir.rglob(file_name))
+    if not matches:
+        raise AirflowFailException(
+            f"Required Kaggle file was not found after download/unzip. "
+            f"source_dir={source_dir} file_name={file_name}"
+        )
+
+    return matches[0]
 
 
 def generate_landing_manifest(**context) -> dict:
     landing_context = context["ti"].xcom_pull(task_ids="build_landing_context")
-    uploaded_files = context["ti"].xcom_pull(task_ids="upload_sources_to_landing")
+    uploaded_files = context["ti"].xcom_pull(task_ids="download_unzip_upload_sources_to_landing")
     ingestion_date = landing_context["ingestion_date"]
     landing_run_id = landing_context["landing_run_id"]
 
@@ -265,21 +250,9 @@ with DAG(
         python_callable=configure_kaggle_credentials,
     )
 
-    download_kaggle_sources_task = PythonOperator(
-        task_id="download_kaggle_sources",
-        python_callable=download_kaggle_sources,
-        execution_timeout=timedelta(hours=2),
-    )
-
-    unzip_kaggle_sources_task = PythonOperator(
-        task_id="unzip_kaggle_sources",
-        python_callable=unzip_kaggle_sources,
-        execution_timeout=timedelta(minutes=30),
-    )
-
-    upload_sources_to_landing_task = PythonOperator(
-        task_id="upload_sources_to_landing",
-        python_callable=upload_sources_to_landing,
+    download_unzip_upload_sources_to_landing_task = PythonOperator(
+        task_id="download_unzip_upload_sources_to_landing",
+        python_callable=download_unzip_upload_sources_to_landing,
         execution_timeout=timedelta(hours=2),
     )
 
@@ -324,9 +297,7 @@ with DAG(
     (
         build_landing_context_task
         >> configure_kaggle_credentials_task
-        >> download_kaggle_sources_task
-        >> unzip_kaggle_sources_task
-        >> upload_sources_to_landing_task
+        >> download_unzip_upload_sources_to_landing_task
         >> generate_landing_manifest_task
         >> validate_landing_files_task
         >> spark_landing_to_raw_task

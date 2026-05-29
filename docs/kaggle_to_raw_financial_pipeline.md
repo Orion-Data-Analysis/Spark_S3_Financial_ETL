@@ -17,7 +17,7 @@ La implementacion principal esta en:
 ```text
 architecture/pipelines/dags/financial_crisis_kaggle_to_raw.py
 architecture/pipelines/spark_jobs/landing_to_raw_financial_crisis.py
-architecture/pipelines/common/financial_landing.py
+architecture/pipelines/dags/common/financial_landing.py
 ```
 
 ## DAG principal
@@ -92,7 +92,7 @@ El manifest incluye:
 La tarea `validate_landing_files` reutiliza la logica de:
 
 ```text
-architecture/pipelines/common/financial_landing.py
+architecture/pipelines/dags/common/financial_landing.py
 ```
 
 Valida:

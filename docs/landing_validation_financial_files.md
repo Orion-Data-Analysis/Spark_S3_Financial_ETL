@@ -8,7 +8,7 @@ La implementacion quedo en:
 
 ```text
 architecture/pipelines/dags/validate_financial_landing_files.py
-architecture/pipelines/common/financial_landing.py
+architecture/pipelines/dags/common/financial_landing.py
 ```
 
 Tambien se reutiliza dentro del flujo completo:

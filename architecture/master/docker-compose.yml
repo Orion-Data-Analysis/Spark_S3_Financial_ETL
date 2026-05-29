@@ -72,6 +72,8 @@ services:
   airflow-cli:
     environment:
       - PYTHONPATH=${PYTHONPATH}
+      - SPARK_HOME=/opt/spark
+      - PATH=/opt/spark/bin:/home/airflow/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games
     <<: *airflow-common
     profiles:
       - debug

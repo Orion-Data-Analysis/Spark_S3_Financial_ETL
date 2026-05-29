@@ -27,6 +27,8 @@ services:
     environment:
       DUMB_INIT_SETSID: "0"
       PYTHONPATH: /opt/pipelines
+      SPARK_HOME: /opt/spark
+      PATH: /opt/spark/bin:/home/airflow/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games
     restart: always
 
 volumes:

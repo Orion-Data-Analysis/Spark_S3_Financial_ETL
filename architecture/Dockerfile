@@ -9,8 +9,10 @@ RUN pip install --no-cache-dir \
     pandas \
     openpyxl \
     python-dotenv \
+    kaggle \
     apache-airflow-providers-amazon \
-    apache-airflow-providers-celery
+    apache-airflow-providers-celery \
+    apache-airflow-providers-apache-spark
 
 # Argumento para instalar dependencias adicionales opcionales desde el .env
 ARG EXTRA_REQUIREMENTS=""

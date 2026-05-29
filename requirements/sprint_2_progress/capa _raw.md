@@ -157,3 +157,70 @@ Eso te permite decir:
 Landing conserva los archivos originales de Kaggle.
 Raw convierte esas fuentes a formato analítico Parquet, agrega metadata técnica y deja los datos listos para staging.
 Airflow orquesta el proceso y Spark ejecuta la ingesta escalable.
+
+Implementacion realizada para validacion Landing
+
+Se implemento una validacion previa al procesamiento Spark para asegurar que la capa Landing tenga los archivos financieros crudos obligatorios antes de avanzar hacia Raw.
+
+Archivo creado:
+
+architecture/pipelines/dags/validate_financial_landing_files.py
+
+Documentacion operativa:
+
+docs/landing_validation_financial_files.md
+
+Archivos validados:
+
+- source_system=ieee_cis_fraud_detection:
+  - train_transaction.csv
+- source_system=credit_card_fraud_detection:
+  - creditcard.csv
+- source_system=paysim:
+  - PS_20174392719_1491204439457_log.csv
+
+Contrato de ruta validado:
+
+s3://orion-financial-crisis-data-395840094505-us-east-2-an/dev/financial_crisis/landing/source_system=<source_system>/ingestion_date=<YYYY-MM-DD>/run_id=<run_id>/<file_name>
+
+La tarea de Airflow usa PythonOperator y S3Hook para:
+
+- validar existencia del objeto en S3;
+- validar completitud minima con ContentLength mayor a cero;
+- registrar en logs el archivo faltante o vacio con source_system y ruta S3;
+- detener el pipeline con AirflowFailException antes de ejecutar Spark.
+
+Configuracion de ejecucion:
+
+- retries: 3
+- retry_delay: 5 minutos
+- retry_exponential_backoff: true
+- max_retry_delay: 20 minutos
+- execution_timeout: 15 minutos
+
+La validacion debe ejecutarse antes del SparkSubmitOperator:
+
+validate_landing_files
+  -> spark_landing_to_raw
+  -> raw_to_staging
+
+Flujo completo automatizado definido:
+
+download_kaggle_sources
+  -> unzip_kaggle_sources
+  -> upload_sources_to_landing
+  -> generate_landing_manifest
+  -> validate_landing_files
+  -> spark_landing_to_raw
+
+DAG principal:
+
+architecture/pipelines/dags/financial_crisis_kaggle_to_raw.py
+
+Spark job hacia Raw:
+
+architecture/pipelines/spark_jobs/landing_to_raw_financial_crisis.py
+
+Documentacion del flujo completo:
+
+docs/kaggle_to_raw_financial_pipeline.md

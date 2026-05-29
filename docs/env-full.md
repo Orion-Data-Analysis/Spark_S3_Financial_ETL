@@ -23,7 +23,7 @@ AIRFLOW__CORE__AUTH_MANAGER=airflow.providers.fab.auth_manager.fab_auth_manager.
 # =========================
 # DATABASE
 # =========================
-AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://coder-ra-c6:Riwi2026**@23.0.1.199:5432/orion_db
+AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://orion:Orion123%21@23.0.1.199:5432/orion_db
 AIRFLOW__DATABASE__SQL_ALCHEMY_POOL_SIZE=5
 AIRFLOW__DATABASE__SQL_ALCHEMY_MAX_OVERFLOW=10
 
@@ -31,7 +31,7 @@ AIRFLOW__DATABASE__SQL_ALCHEMY_MAX_OVERFLOW=10
 # CELERY
 # =========================
 AIRFLOW__CELERY__BROKER_URL=amqp://airflow:airflow@23.0.2.75:5672//
-AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql+psycopg2://coder-ra-c6:Riwi2026**@23.0.1.199:5432/orion_db
+AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql+psycopg2://orion:Orion123%21@23.0.1.199:5432/orion_db
 
 # =========================
 # API / WEB

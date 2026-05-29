@@ -28,6 +28,7 @@ from common.financial_landing import (
 
 TMP_ROOT = Path(os.getenv("FINANCIAL_KAGGLE_TMP_ROOT", "/tmp/orion_financial_kaggle"))
 SPARK_CONN_ID = os.getenv("SPARK_CONN_ID", "spark_standalone")
+SPARK_BINARY = os.getenv("SPARK_BINARY", "/opt/spark/bin/spark-submit")
 SPARK_APPLICATION = os.getenv(
     "LANDING_TO_RAW_SPARK_APPLICATION",
     "/opt/pipelines/spark_jobs/landing_to_raw_financial_crisis.py",
@@ -273,6 +274,7 @@ with DAG(
     spark_landing_to_raw_task = SparkSubmitOperator(
         task_id="spark_landing_to_raw",
         conn_id=SPARK_CONN_ID,
+        spark_binary=SPARK_BINARY,
         application=SPARK_APPLICATION,
         application_args=[
             "--bucket",

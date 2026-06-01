@@ -218,6 +218,60 @@ def generate_landing_manifest(**context) -> dict:
     return {"manifest_key": manifest_key, "manifest_uri": manifest_uri}
 
 
+def generate_raw_manifest(**context) -> dict:
+    landing_context = context["ti"].xcom_pull(task_ids="build_landing_context")
+    ingestion_date = landing_context["ingestion_date"]
+    run_id = landing_context["landing_run_id"]
+
+    sources = []
+    for expected_file in EXPECTED_LANDING_FILES:
+        source_system = expected_file["source_system"]
+        dataset = expected_file["dataset"]
+        file_name = expected_file["file_name"]
+        sources.append(
+            {
+                "source_system": source_system,
+                "dataset": dataset,
+                "format": "parquet",
+                "landing_path": build_landing_uri(source_system, ingestion_date, run_id, file_name),
+                "raw_path": (
+                    f"s3://{BUCKET}/{ENV}/{DOMAIN}/raw/"
+                    f"{source_system}/{dataset}/"
+                    f"ingestion_date={ingestion_date}/"
+                    f"run_id={run_id}/"
+                ),
+                "status": "loaded",
+            }
+        )
+
+    manifest_key = (
+        f"{ENV}/{DOMAIN}/raw/_manifests/"
+        f"raw_manifest_ingestion_date={ingestion_date}_run_id={run_id}.json"
+    )
+    manifest = {
+        "layer": "raw",
+        "domain": DOMAIN,
+        "environment": ENV,
+        "bucket": BUCKET,
+        "ingestion_date": ingestion_date,
+        "run_id": run_id,
+        "format": "parquet",
+        "created_at_utc": datetime.now(timezone.utc).isoformat(),
+        "sources": sources,
+    }
+
+    s3_hook = S3Hook(aws_conn_id=AWS_CONN_ID)
+    s3_hook.load_string(
+        string_data=json.dumps(manifest, indent=2),
+        key=manifest_key,
+        bucket_name=BUCKET,
+        replace=True,
+    )
+
+    manifest_uri = f"s3://{BUCKET}/{manifest_key}"
+    return {"manifest_key": manifest_key, "manifest_uri": manifest_uri}
+
+
 def validate_landing_files_from_context(**context) -> None:
     landing_context = context["ti"].xcom_pull(task_ids="build_landing_context")
     validate_expected_landing_files(
@@ -296,6 +350,12 @@ with DAG(
         verbose=True,
     )
 
+    generate_raw_manifest_task = PythonOperator(
+        task_id="generate_raw_manifest",
+        python_callable=generate_raw_manifest,
+        execution_timeout=timedelta(minutes=10),
+    )
+
     (
         build_landing_context_task
         >> configure_kaggle_credentials_task
@@ -303,4 +363,5 @@ with DAG(
         >> generate_landing_manifest_task
         >> validate_landing_files_task
         >> spark_landing_to_raw_task
+        >> generate_raw_manifest_task
     )

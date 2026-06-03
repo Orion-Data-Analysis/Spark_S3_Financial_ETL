@@ -4,6 +4,7 @@ from pyspark.sql import functions as F
 
 from spark_jobs.session import build_spark_session
 
+from spark_jobs.metadata import inject_metadata, validate_metadata_columns
 
 SOURCES = [
     {
@@ -89,15 +90,17 @@ def main() -> None:
                 .csv(input_path)
             )
 
-            enriched_df = (
-                df.withColumn("source_system", F.lit(source["source_system"]))
-                .withColumn("raw_dataset", F.lit(source["dataset"]))
-                .withColumn("source_file_name", F.lit(source["file_name"]))
-                .withColumn("landing_path", F.lit(input_path))
-                .withColumn("ingestion_date", F.lit(args.ingestion_date))
-                .withColumn("run_id", F.lit(args.run_id))
-                .withColumn("raw_ingestion_time", F.current_timestamp())
+            enriched_df = inject_metadata(
+                df=df,
+                source_system=source["source_system"],
+                raw_dataset=source["dataset"],
+                source_file_name=source["file_name"],
+                landing_path=input_path,
+                ingestion_date=args.ingestion_date,
+                run_id=args.run_id,
             )
+
+            validate_metadata_columns(enriched_df, source["source_system"])
 
             print(f"Writing Raw Parquet: {output_path}")
             enriched_df.write.mode(args.write_mode).parquet(output_path)

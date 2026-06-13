@@ -33,6 +33,18 @@ SPARK_APPLICATION = os.getenv(
     "LANDING_TO_RAW_SPARK_APPLICATION",
     "/opt/pipelines/spark_jobs/landing_to_raw_financial_crisis.py",
 )
+SPARK_RAW_TO_STAGING_APP = os.getenv(
+    "RAW_TO_STAGING_SPARK_APPLICATION",
+    "/opt/pipelines/spark_jobs/raw_to_staging_financial_crisis.py",
+)
+SPARK_STAGING_TO_INTERMEDIATE_APP = os.getenv(
+    "STAGING_TO_INTERMEDIATE_SPARK_APPLICATION",
+    "/opt/pipelines/spark_jobs/staging_to_intermediate_financial_crisis.py",
+)
+SPARK_INTERMEDIATE_TO_MART_APP = os.getenv(
+    "INTERMEDIATE_TO_MART_SPARK_APPLICATION",
+    "/opt/pipelines/spark_jobs/intermediate_to_mart_financial_crisis.py",
+)
 
 
 def safe_path_token(value: str) -> str:
@@ -356,6 +368,81 @@ with DAG(
         execution_timeout=timedelta(minutes=10),
     )
 
+    spark_raw_to_staging_task = SparkSubmitOperator(
+        task_id="spark_raw_to_staging",
+        conn_id=SPARK_CONN_ID,
+        spark_binary=SPARK_BINARY,
+        application=SPARK_RAW_TO_STAGING_APP,
+        application_args=[
+            "--bucket",
+            BUCKET,
+            "--env",
+            ENV,
+            "--domain",
+            DOMAIN,
+            "--ingestion-date",
+            "{{ ti.xcom_pull(task_ids='build_landing_context')['ingestion_date'] }}",
+            "--run-id",
+            "{{ ti.xcom_pull(task_ids='build_landing_context')['landing_run_id'] }}",
+        ],
+        conf={
+            "spark.driver.port": "7079",
+            "spark.blockManager.port": "7080",
+            "spark.ui.port": "4040",
+        },
+        verbose=True,
+    )
+
+    spark_staging_to_intermediate_task = SparkSubmitOperator(
+        task_id="spark_staging_to_intermediate",
+        conn_id=SPARK_CONN_ID,
+        spark_binary=SPARK_BINARY,
+        application=SPARK_STAGING_TO_INTERMEDIATE_APP,
+        application_args=[
+            "--bucket",
+            BUCKET,
+            "--env",
+            ENV,
+            "--domain",
+            DOMAIN,
+            "--ingestion-date",
+            "{{ ti.xcom_pull(task_ids='build_landing_context')['ingestion_date'] }}",
+            "--run-id",
+            "{{ ti.xcom_pull(task_ids='build_landing_context')['landing_run_id'] }}",
+        ],
+        conf={
+            "spark.driver.port": "7079",
+            "spark.blockManager.port": "7080",
+            "spark.ui.port": "4040",
+        },
+        verbose=True,
+    )
+
+    spark_intermediate_to_mart_task = SparkSubmitOperator(
+        task_id="spark_intermediate_to_mart",
+        conn_id=SPARK_CONN_ID,
+        spark_binary=SPARK_BINARY,
+        application=SPARK_INTERMEDIATE_TO_MART_APP,
+        application_args=[
+            "--bucket",
+            BUCKET,
+            "--env",
+            ENV,
+            "--domain",
+            DOMAIN,
+            "--ingestion-date",
+            "{{ ti.xcom_pull(task_ids='build_landing_context')['ingestion_date'] }}",
+            "--run-id",
+            "{{ ti.xcom_pull(task_ids='build_landing_context')['landing_run_id'] }}",
+        ],
+        conf={
+            "spark.driver.port": "7079",
+            "spark.blockManager.port": "7080",
+            "spark.ui.port": "4040",
+        },
+        verbose=True,
+    )
+
     (
         build_landing_context_task
         >> configure_kaggle_credentials_task
@@ -364,4 +451,7 @@ with DAG(
         >> validate_landing_files_task
         >> spark_landing_to_raw_task
         >> generate_raw_manifest_task
+        >> spark_raw_to_staging_task
+        >> spark_staging_to_intermediate_task
+        >> spark_intermediate_to_mart_task
     )

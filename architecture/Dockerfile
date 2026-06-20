@@ -7,7 +7,8 @@ ARG HADOOP_AWS_VERSION=3.3.4
 ARG AWS_SDK_BUNDLE_VERSION=1.12.262
 
 ENV SPARK_HOME=/opt/spark
-ENV PATH="${SPARK_HOME}/bin:${PATH}"
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH="${SPARK_HOME}/bin:${JAVA_HOME}/bin:${PATH}"
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -37,7 +38,8 @@ RUN pip install --no-cache-dir \
     kaggle \
     apache-airflow-providers-amazon \
     apache-airflow-providers-celery \
-    apache-airflow-providers-apache-spark
+    apache-airflow-providers-apache-spark \
+    apache-airflow-providers-fab
 
 # Argumento para instalar dependencias adicionales opcionales desde el .env
 ARG EXTRA_REQUIREMENTS=""

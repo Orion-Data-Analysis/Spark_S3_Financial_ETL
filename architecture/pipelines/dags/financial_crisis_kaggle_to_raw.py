@@ -39,21 +39,41 @@ SPARK_RAW_TO_STAGING_APP = os.getenv(
 )
 SPARK_STAGING_TO_INTERMEDIATE_APP = os.getenv(
     "STAGING_TO_INTERMEDIATE_SPARK_APPLICATION",
-    "/opt/pipelines/spark_jobs/raw_to_staging_financial_crisis.py",
+    "/opt/pipelines/spark_jobs/staging_to_intermediate_financial_crisis.py",
 )
 SPARK_INTERMEDIATE_TO_MART_APP = os.getenv(
     "INTERMEDIATE_TO_MART_SPARK_APPLICATION",
     "/opt/pipelines/spark_jobs/intermediate_to_mart_financial_crisis.py",
 )
-SPARK_PACKAGES = os.getenv(
-    "SPARK_PACKAGES",
-    "org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262",
-)
-SPARK_DRIVER_MEMORY = os.getenv("SPARK_DRIVER_MEMORY", "4g")
-SPARK_EXECUTOR_MEMORY = os.getenv("SPARK_EXECUTOR_MEMORY", "6g")
+# NOTA: NO se usa --packages aquí a propósito. Los jars de hadoop-aws y
+# aws-java-sdk-bundle ya vienen incluidos dentro de la imagen Docker
+# (ver architecture/Dockerfile y architecture/spark_orion/Dockerfile).
+# Pasar --packages de nuevo obliga a spark-submit a resolver/descargar
+# las mismas dependencias vía Ivy en cada ejecución, lo cual consume
+# memoria extra del driver (que corre dentro del contenedor del Celery
+# worker, con mem_limit acotado) y fue una causa directa del Error -9
+# (SIGKILL / OOM) reportado en el log de Airflow.
+SPARK_DRIVER_MEMORY = os.getenv("SPARK_DRIVER_MEMORY", "1g")
+SPARK_EXECUTOR_MEMORY = os.getenv("SPARK_EXECUTOR_MEMORY", "2g")
 SPARK_EXECUTOR_CORES = int(os.getenv("SPARK_EXECUTOR_CORES", "2"))
 SPARK_TOTAL_EXECUTOR_CORES = int(os.getenv("SPARK_TOTAL_EXECUTOR_CORES", "4"))
-SPARK_DRIVER_MAX_RESULT_SIZE = os.getenv("SPARK_DRIVER_MAX_RESULT_SIZE", "2g")
+SPARK_DRIVER_MAX_RESULT_SIZE = os.getenv("SPARK_DRIVER_MAX_RESULT_SIZE", "1g")
+# IP privada de ESTA maquina (worker1/worker2/worker3). Se define distinto
+# en el .env de cada EC2 worker. Si no se define, Spark intentara
+# autodetectar una IP dentro del contenedor que normalmente NO es
+# alcanzable desde las otras instancias EC2, y los executors remotos no
+# podran conectarse de vuelta al driver.
+SPARK_DRIVER_HOST = os.getenv("SPARK_DRIVER_HOST", "")
+
+SPARK_CONF = {
+    "spark.driver.port": "7079",
+    "spark.blockManager.port": "7080",
+    "spark.ui.port": "4040",
+    "spark.driver.maxResultSize": SPARK_DRIVER_MAX_RESULT_SIZE,
+    "spark.driver.bindAddress": "0.0.0.0",
+}
+if SPARK_DRIVER_HOST:
+    SPARK_CONF["spark.driver.host"] = SPARK_DRIVER_HOST
 
 
 def safe_path_token(value: str) -> str:
@@ -374,7 +394,6 @@ with DAG(
         conn_id=SPARK_CONN_ID,
         spark_binary=SPARK_BINARY,
         application=SPARK_APPLICATION,
-        packages=SPARK_PACKAGES,
         driver_memory=SPARK_DRIVER_MEMORY,
         executor_memory=SPARK_EXECUTOR_MEMORY,
         executor_cores=SPARK_EXECUTOR_CORES,
@@ -391,13 +410,9 @@ with DAG(
             "--run-id",
             "{{ ti.xcom_pull(task_ids='build_landing_context')['landing_run_id'] }}",
         ],
-        conf={
-            "spark.driver.port": "7079",
-            "spark.blockManager.port": "7080",
-            "spark.ui.port": "4040",
-            "spark.driver.maxResultSize": SPARK_DRIVER_MAX_RESULT_SIZE,
-        },
+        conf=SPARK_CONF,
         verbose=True,
+        pool="spark_jobs_pool",
     )
 
     generate_raw_manifest_task = PythonOperator(
@@ -411,7 +426,6 @@ with DAG(
         conn_id=SPARK_CONN_ID,
         spark_binary=SPARK_BINARY,
         application=SPARK_RAW_TO_STAGING_APP,
-        packages=SPARK_PACKAGES,
         driver_memory=SPARK_DRIVER_MEMORY,
         executor_memory=SPARK_EXECUTOR_MEMORY,
         executor_cores=SPARK_EXECUTOR_CORES,
@@ -428,13 +442,9 @@ with DAG(
             "--run-id",
             "{{ ti.xcom_pull(task_ids='build_landing_context')['landing_run_id'] }}",
         ],
-        conf={
-            "spark.driver.port": "7079",
-            "spark.blockManager.port": "7080",
-            "spark.ui.port": "4040",
-            "spark.driver.maxResultSize": SPARK_DRIVER_MAX_RESULT_SIZE,
-        },
+        conf=SPARK_CONF,
         verbose=True,
+        pool="spark_jobs_pool",
     )
 
     spark_staging_to_intermediate_task = SparkSubmitOperator(
@@ -442,7 +452,6 @@ with DAG(
         conn_id=SPARK_CONN_ID,
         spark_binary=SPARK_BINARY,
         application=SPARK_STAGING_TO_INTERMEDIATE_APP,
-        packages=SPARK_PACKAGES,
         driver_memory=SPARK_DRIVER_MEMORY,
         executor_memory=SPARK_EXECUTOR_MEMORY,
         executor_cores=SPARK_EXECUTOR_CORES,
@@ -459,13 +468,9 @@ with DAG(
             "--run-id",
             "{{ ti.xcom_pull(task_ids='build_landing_context')['landing_run_id'] }}",
         ],
-        conf={
-            "spark.driver.port": "7079",
-            "spark.blockManager.port": "7080",
-            "spark.ui.port": "4040",
-            "spark.driver.maxResultSize": SPARK_DRIVER_MAX_RESULT_SIZE,
-        },
+        conf=SPARK_CONF,
         verbose=True,
+        pool="spark_jobs_pool",
     )
 
     spark_intermediate_to_mart_task = SparkSubmitOperator(
@@ -473,7 +478,6 @@ with DAG(
         conn_id=SPARK_CONN_ID,
         spark_binary=SPARK_BINARY,
         application=SPARK_INTERMEDIATE_TO_MART_APP,
-        packages=SPARK_PACKAGES,
         driver_memory=SPARK_DRIVER_MEMORY,
         executor_memory=SPARK_EXECUTOR_MEMORY,
         executor_cores=SPARK_EXECUTOR_CORES,
@@ -490,13 +494,9 @@ with DAG(
             "--run-id",
             "{{ ti.xcom_pull(task_ids='build_landing_context')['landing_run_id'] }}",
         ],
-        conf={
-            "spark.driver.port": "7079",
-            "spark.blockManager.port": "7080",
-            "spark.ui.port": "4040",
-            "spark.driver.maxResultSize": SPARK_DRIVER_MAX_RESULT_SIZE,
-        },
+        conf=SPARK_CONF,
         verbose=True,
+        pool="spark_jobs_pool",
     )
 
     (

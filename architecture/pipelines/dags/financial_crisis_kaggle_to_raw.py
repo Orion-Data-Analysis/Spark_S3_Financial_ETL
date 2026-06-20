@@ -98,6 +98,21 @@ def configure_kaggle_credentials() -> None:
 def download_unzip_upload_sources_to_landing(**context) -> list[dict]:
     configure_kaggle_credentials()
 
+    # --- INYECCIÓN DE CREDENCIALES AL ENTORNO DEL PROCESO ---
+    # Esto asegura que la CLI de kaggle encuentre las credenciales en esta tarea.
+    api_token = Variable.get("kaggle_api_token", default_var=os.getenv("KAGGLE_API_TOKEN"))
+    username = Variable.get("kaggle_username", default_var=os.getenv("KAGGLE_USERNAME"))
+    key = Variable.get("kaggle_key", default_var=os.getenv("KAGGLE_KEY"))
+
+    env_origen = os.environ.copy()
+    if api_token:
+        env_origen["KAGGLE_API_TOKEN"] = api_token
+    if username:
+        env_origen["KAGGLE_USERNAME"] = username
+    if key:
+        env_origen["KAGGLE_KEY"] = key
+    # -------------------------------------------------------
+
     landing_context = context["ti"].xcom_pull(task_ids="build_landing_context")
     work_dir = Path(landing_context["work_dir"])
     ingestion_date = landing_context["ingestion_date"]
@@ -144,7 +159,8 @@ def download_unzip_upload_sources_to_landing(**context) -> list[dict]:
                     "--force",
                 ]
 
-            subprocess.run(command, check=True)
+            # Pasamos env=env_origen para heredar las credenciales mapeadas
+            subprocess.run(command, check=True, env=env_origen)
             source_dirs[source_system] = str(source_dir)
             downloaded_sources.add(source_system)
 

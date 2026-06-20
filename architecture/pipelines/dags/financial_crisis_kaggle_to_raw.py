@@ -45,6 +45,10 @@ SPARK_INTERMEDIATE_TO_MART_APP = os.getenv(
     "INTERMEDIATE_TO_MART_SPARK_APPLICATION",
     "/opt/pipelines/spark_jobs/intermediate_to_mart_financial_crisis.py",
 )
+SPARK_PACKAGES = os.getenv(
+    "SPARK_PACKAGES",
+    "org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262",
+)
 
 
 def safe_path_token(value: str) -> str:
@@ -365,6 +369,7 @@ with DAG(
         conn_id=SPARK_CONN_ID,
         spark_binary=SPARK_BINARY,
         application=SPARK_APPLICATION,
+        packages=SPARK_PACKAGES,
         application_args=[
             "--bucket",
             BUCKET,
@@ -396,6 +401,7 @@ with DAG(
         conn_id=SPARK_CONN_ID,
         spark_binary=SPARK_BINARY,
         application=SPARK_RAW_TO_STAGING_APP,
+        packages=SPARK_PACKAGES,
         application_args=[
             "--bucket",
             BUCKET,
@@ -421,6 +427,7 @@ with DAG(
         conn_id=SPARK_CONN_ID,
         spark_binary=SPARK_BINARY,
         application=SPARK_STAGING_TO_INTERMEDIATE_APP,
+        packages=SPARK_PACKAGES,
         application_args=[
             "--bucket",
             BUCKET,
@@ -446,6 +453,7 @@ with DAG(
         conn_id=SPARK_CONN_ID,
         spark_binary=SPARK_BINARY,
         application=SPARK_INTERMEDIATE_TO_MART_APP,
+        packages=SPARK_PACKAGES,
         application_args=[
             "--bucket",
             BUCKET,

@@ -23,7 +23,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 120s
-    mem_limit: 1g
+    mem_limit: ${AIRFLOW_WORKER_MEM_LIMIT:-6g}
     environment:
       DUMB_INIT_SETSID: "0"
       PYTHONPATH: /opt/pipelines

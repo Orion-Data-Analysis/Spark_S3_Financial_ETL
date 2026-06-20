@@ -49,6 +49,11 @@ SPARK_PACKAGES = os.getenv(
     "SPARK_PACKAGES",
     "org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262",
 )
+SPARK_DRIVER_MEMORY = os.getenv("SPARK_DRIVER_MEMORY", "4g")
+SPARK_EXECUTOR_MEMORY = os.getenv("SPARK_EXECUTOR_MEMORY", "6g")
+SPARK_EXECUTOR_CORES = int(os.getenv("SPARK_EXECUTOR_CORES", "2"))
+SPARK_TOTAL_EXECUTOR_CORES = int(os.getenv("SPARK_TOTAL_EXECUTOR_CORES", "4"))
+SPARK_DRIVER_MAX_RESULT_SIZE = os.getenv("SPARK_DRIVER_MAX_RESULT_SIZE", "2g")
 
 
 def safe_path_token(value: str) -> str:
@@ -370,6 +375,10 @@ with DAG(
         spark_binary=SPARK_BINARY,
         application=SPARK_APPLICATION,
         packages=SPARK_PACKAGES,
+        driver_memory=SPARK_DRIVER_MEMORY,
+        executor_memory=SPARK_EXECUTOR_MEMORY,
+        executor_cores=SPARK_EXECUTOR_CORES,
+        total_executor_cores=SPARK_TOTAL_EXECUTOR_CORES,
         application_args=[
             "--bucket",
             BUCKET,
@@ -386,6 +395,7 @@ with DAG(
             "spark.driver.port": "7079",
             "spark.blockManager.port": "7080",
             "spark.ui.port": "4040",
+            "spark.driver.maxResultSize": SPARK_DRIVER_MAX_RESULT_SIZE,
         },
         verbose=True,
     )
@@ -402,6 +412,10 @@ with DAG(
         spark_binary=SPARK_BINARY,
         application=SPARK_RAW_TO_STAGING_APP,
         packages=SPARK_PACKAGES,
+        driver_memory=SPARK_DRIVER_MEMORY,
+        executor_memory=SPARK_EXECUTOR_MEMORY,
+        executor_cores=SPARK_EXECUTOR_CORES,
+        total_executor_cores=SPARK_TOTAL_EXECUTOR_CORES,
         application_args=[
             "--bucket",
             BUCKET,
@@ -418,6 +432,7 @@ with DAG(
             "spark.driver.port": "7079",
             "spark.blockManager.port": "7080",
             "spark.ui.port": "4040",
+            "spark.driver.maxResultSize": SPARK_DRIVER_MAX_RESULT_SIZE,
         },
         verbose=True,
     )
@@ -428,6 +443,10 @@ with DAG(
         spark_binary=SPARK_BINARY,
         application=SPARK_STAGING_TO_INTERMEDIATE_APP,
         packages=SPARK_PACKAGES,
+        driver_memory=SPARK_DRIVER_MEMORY,
+        executor_memory=SPARK_EXECUTOR_MEMORY,
+        executor_cores=SPARK_EXECUTOR_CORES,
+        total_executor_cores=SPARK_TOTAL_EXECUTOR_CORES,
         application_args=[
             "--bucket",
             BUCKET,
@@ -444,6 +463,7 @@ with DAG(
             "spark.driver.port": "7079",
             "spark.blockManager.port": "7080",
             "spark.ui.port": "4040",
+            "spark.driver.maxResultSize": SPARK_DRIVER_MAX_RESULT_SIZE,
         },
         verbose=True,
     )
@@ -454,6 +474,10 @@ with DAG(
         spark_binary=SPARK_BINARY,
         application=SPARK_INTERMEDIATE_TO_MART_APP,
         packages=SPARK_PACKAGES,
+        driver_memory=SPARK_DRIVER_MEMORY,
+        executor_memory=SPARK_EXECUTOR_MEMORY,
+        executor_cores=SPARK_EXECUTOR_CORES,
+        total_executor_cores=SPARK_TOTAL_EXECUTOR_CORES,
         application_args=[
             "--bucket",
             BUCKET,
@@ -470,6 +494,7 @@ with DAG(
             "spark.driver.port": "7079",
             "spark.blockManager.port": "7080",
             "spark.ui.port": "4040",
+            "spark.driver.maxResultSize": SPARK_DRIVER_MAX_RESULT_SIZE,
         },
         verbose=True,
     )

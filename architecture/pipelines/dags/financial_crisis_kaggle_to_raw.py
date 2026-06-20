@@ -39,7 +39,7 @@ SPARK_RAW_TO_STAGING_APP = os.getenv(
 )
 SPARK_STAGING_TO_INTERMEDIATE_APP = os.getenv(
     "STAGING_TO_INTERMEDIATE_SPARK_APPLICATION",
-    "/opt/pipelines/spark_jobs/staging_to_intermediate_financial_crisis.py",
+    "/opt/pipelines/spark_jobs/raw_to_staging_financial_crisis.py",
 )
 SPARK_INTERMEDIATE_TO_MART_APP = os.getenv(
     "INTERMEDIATE_TO_MART_SPARK_APPLICATION",
@@ -96,23 +96,31 @@ def configure_kaggle_credentials() -> None:
 
 
 def download_unzip_upload_sources_to_landing(**context) -> list[dict]:
-    configure_kaggle_credentials()
-
-    # --- INYECCIÓN DE CREDENCIALES AL ENTORNO DEL PROCESO ---
-    # Esto asegura que la CLI de kaggle encuentre las credenciales en esta tarea.
+    # 1. Asegurar credenciales físicas y entorno en este ejecutor
     api_token = Variable.get("kaggle_api_token", default_var=os.getenv("KAGGLE_API_TOKEN"))
     username = Variable.get("kaggle_username", default_var=os.getenv("KAGGLE_USERNAME"))
     key = Variable.get("kaggle_key", default_var=os.getenv("KAGGLE_KEY"))
 
-    env_origen = os.environ.copy()
-    if api_token:
-        env_origen["KAGGLE_API_TOKEN"] = api_token
-    if username:
-        env_origen["KAGGLE_USERNAME"] = username
-    if key:
-        env_origen["KAGGLE_KEY"] = key
-    # -------------------------------------------------------
+    kaggle_dir = Path.home() / ".kaggle"
+    kaggle_dir.mkdir(parents=True, exist_ok=True)
 
+    env_origen = os.environ.copy()
+
+    if api_token:
+        access_token_file = kaggle_dir / "access_token"
+        access_token_file.write_text(api_token, encoding="utf-8")
+        os.chmod(access_token_file, 0o600)
+        env_origen["KAGGLE_API_TOKEN"] = api_token
+    elif username and key:
+        kaggle_json = kaggle_dir / "kaggle.json"
+        kaggle_json.write_text(json.dumps({"username": username, "key": key}), encoding="utf-8")
+        os.chmod(kaggle_json, 0o600)
+        env_origen["KAGGLE_USERNAME"] = username
+        env_origen["KAGGLE_KEY"] = key
+    else:
+        raise AirflowFailException("No se encontraron credenciales de Kaggle.")
+
+    # 2. Continuar con la descarga normal
     landing_context = context["ti"].xcom_pull(task_ids="build_landing_context")
     work_dir = Path(landing_context["work_dir"])
     ingestion_date = landing_context["ingestion_date"]
@@ -159,7 +167,6 @@ def download_unzip_upload_sources_to_landing(**context) -> list[dict]:
                     "--force",
                 ]
 
-            # Pasamos env=env_origen para heredar las credenciales mapeadas
             subprocess.run(command, check=True, env=env_origen)
             source_dirs[source_system] = str(source_dir)
             downloaded_sources.add(source_system)

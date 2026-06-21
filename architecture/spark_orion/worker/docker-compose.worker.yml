@@ -1,6 +1,7 @@
 services:
   spark-worker:
     image: ${SPARK_IMAGE}
+    user: root
     build:
       context: ..
       dockerfile: Dockerfile

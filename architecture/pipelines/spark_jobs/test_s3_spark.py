@@ -5,7 +5,7 @@ from spark_jobs.session import build_spark_session
 
 
 DEFAULT_TARGET_PATH = (
-    "s3a://orion-financial-crisis-data-395840094505-us-east-2-an/"
+    "s3a://orion-financial-crisis-data/"
     "dev/financial_crisis/logs/test_spark_e2e"
 )
 

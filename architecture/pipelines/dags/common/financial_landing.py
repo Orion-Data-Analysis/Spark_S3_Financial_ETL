@@ -10,7 +10,7 @@ LOGGER = logging.getLogger(__name__)
 AWS_CONN_ID = os.getenv("FINANCIAL_AWS_CONN_ID", "aws_orion_s3")
 BUCKET = os.getenv(
     "FINANCIAL_S3_BUCKET",
-    "orion-financial-crisis-data-395840094505-us-east-2-an",
+    "orion-financial-crisis-data",
 )
 ENV = os.getenv("FINANCIAL_ENV", "dev")
 DOMAIN = os.getenv("FINANCIAL_S3_DOMAIN", "financial_crisis")

@@ -48,6 +48,7 @@ def compute_transaction_velocity(df: DataFrame) -> DataFrame:
         F.col("origin_account_id"),
         F.col("event_timestamp"),
         F.col("amount"),
+        F.col("is_fraud"),
         F.count("event_id").over(window_1h).alias("tx_count_1h"),
         F.sum("amount").over(window_1h).alias("tx_amount_1h"),
         F.count("event_id").over(window_24h).alias("tx_count_24h"),

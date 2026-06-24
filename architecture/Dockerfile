@@ -30,7 +30,7 @@ USER airflow
 
 # Instalación de todas las dependencias fijas para optimizar el tiempo de arranque
 RUN pip install --no-cache-dir \
-    'apache-airflow-core[gunicorn]' \
+    'apache-airflow[gunicorn]' \
     gunicorn \
     pandas \
     openpyxl \

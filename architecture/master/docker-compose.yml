@@ -68,6 +68,7 @@ services:
         mkdir -p /opt/airflow/{logs,dags,plugins,config}
         chown -R "${AIRFLOW_UID}:0" /opt/airflow/
         /entrypoint airflow db migrate
+        /entrypoint airflow pools set spark_jobs_pool 4 "Pool for Spark Submit jobs"
 
   airflow-cli:
     environment:

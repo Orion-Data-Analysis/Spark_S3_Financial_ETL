@@ -10,7 +10,7 @@ services:
       - /opt/spark/bin/spark-class
       - org.apache.spark.deploy.master.Master
       - --host
-      - "0.0.0.0"
+      - "${SPARK_MASTER_BIND_HOST}"
       - --port
       - "${SPARK_MASTER_PORT}"
       - --webui-port

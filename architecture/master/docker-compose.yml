@@ -12,12 +12,19 @@ x-airflow-common: &airflow-common
     - ../pipelines:/opt/pipelines
   user: "${AIRFLOW_UID:-50000}:0"
 
+x-worker-hosts: &worker-hosts
+  extra_hosts:
+    - "airflow-worker:10.0.2.120"
+    - "worker1:10.0.2.120"
+    - "worker2:10.0.2.8"
+    - "worker3:10.0.2.123"
+
 services:
 
   airflow-apiserver:
+    <<: [*airflow-common, *worker-hosts]
     environment:
       - PYTHONPATH=${PYTHONPATH}
-    <<: *airflow-common
     command: airflow api-server
     ports:
       - "8080:8080"
@@ -27,9 +34,9 @@ services:
         condition: service_completed_successfully
 
   airflow-scheduler:
+    <<: [*airflow-common, *worker-hosts]
     environment:
       - PYTHONPATH=${PYTHONPATH}
-    <<: *airflow-common
     command: scheduler
     restart: always
     depends_on:
@@ -37,9 +44,9 @@ services:
         condition: service_completed_successfully
 
   airflow-dag-processor:
+    <<: *airflow-common
     environment:
       - PYTHONPATH=${PYTHONPATH}
-    <<: *airflow-common
     command: dag-processor
     restart: always
     depends_on:
@@ -47,9 +54,9 @@ services:
         condition: service_completed_successfully
 
   airflow-triggerer:
+    <<: *airflow-common
     environment:
       - PYTHONPATH=${PYTHONPATH}
-    <<: *airflow-common
     command: triggerer
     restart: always
     depends_on:
@@ -57,9 +64,9 @@ services:
         condition: service_completed_successfully
 
   airflow-init:
+    <<: *airflow-common
     environment:
       - PYTHONPATH=${PYTHONPATH}
-    <<: *airflow-common
     entrypoint: /bin/bash
     user: "0:0"
     command:
@@ -71,11 +78,11 @@ services:
         /entrypoint airflow pools set spark_jobs_pool 4 "Pool for Spark Submit jobs"
 
   airflow-cli:
+    <<: *airflow-common
     environment:
       - PYTHONPATH=${PYTHONPATH}
       - SPARK_HOME=/opt/spark
       - PATH=/opt/spark/bin:/home/airflow/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games
-    <<: *airflow-common
     profiles:
       - debug
     command:
@@ -84,9 +91,9 @@ services:
       - airflow
 
   flower:
+    <<: [*airflow-common, *worker-hosts]
     environment:
       - PYTHONPATH=${PYTHONPATH}
-    <<: *airflow-common
     command: celery flower
     ports:
       - "5555:5555"

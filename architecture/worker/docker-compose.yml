@@ -16,7 +16,8 @@ services:
   airflow-worker:
     <<: *airflow-common
     hostname: ${CELERY_HOSTNAME:-airflow-worker}
-        ports:
+
+    ports:
       - "8793:8793"
     command: bash -c 'airflow celery worker --autoscale 2,1 -H "$${CELERY_HOSTNAME}" -q "$${QUEUES}"'
     healthcheck:

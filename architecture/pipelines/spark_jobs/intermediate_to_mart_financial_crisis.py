@@ -34,7 +34,7 @@ def compute_daily_fraud_metrics(staging_df: DataFrame) -> DataFrame:
 
 def compute_high_risk_alerts(velocity_df: DataFrame, profile_df: DataFrame) -> DataFrame:
     # Join velocity and profile datasets on origin_account_id
-    alerts_df = velocity_df.join(profile_df, on="origin_account_id", how="inner")
+    alerts_df = velocity_df.join(profile_df, on=["origin_account_id", "ingestion_date", "run_id"], how="inner")
 
     # Define high-risk conditions
     is_high_velocity = F.col("tx_count_24h") > 10

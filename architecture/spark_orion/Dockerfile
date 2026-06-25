@@ -1,34 +1,16 @@
-services:
-  spark-worker:
-    image: ${SPARK_IMAGE}
-    user: root
-    build:
-      context: ..
-      dockerfile: Dockerfile
-    container_name: spark-worker-${WORKER_ID}
-    hostname: spark-worker-${WORKER_ID}
-    command:
-      - /opt/spark/bin/spark-class
-      - org.apache.spark.deploy.worker.Worker
-      - "spark://${SPARK_MASTER_CONNECT_HOST}:${SPARK_MASTER_PORT}"
-      - --host
-      - "${SPARK_WORKER_HOST}"
-      - --cores
-      - "${SPARK_WORKER_CORES}"
-      - --memory
-      - "${SPARK_WORKER_MEMORY}"
-      - --webui-port
-      - "${SPARK_WORKER_WEBUI_PORT}"
-    ports:
-      - "${SPARK_WORKER_WEBUI_PORT}:${SPARK_WORKER_WEBUI_PORT}"
-    volumes:
-      - ${SPARK_LOGS_PATH}:/opt/spark/logs
-      - ${SPARK_WORK_PATH}:/opt/spark/work
-    networks:
-      - spark-net
-    restart: ${RESTART_POLICY}
+FROM apache/spark:3.5.0
 
-networks:
-  spark-net:
-    name: ${SPARK_NETWORK}
-    external: true
+ARG HADOOP_AWS_VERSION=3.3.4
+ARG AWS_SDK_BUNDLE_VERSION=1.12.262
+
+USER root
+
+ADD https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/${HADOOP_AWS_VERSION}/hadoop-aws-${HADOOP_AWS_VERSION}.jar /opt/spark/jars/
+ADD https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/${AWS_SDK_BUNDLE_VERSION}/aws-java-sdk-bundle-${AWS_SDK_BUNDLE_VERSION}.jar /opt/spark/jars/
+
+RUN chmod 0644 /opt/spark/jars/hadoop-aws-${HADOOP_AWS_VERSION}.jar \
+        /opt/spark/jars/aws-java-sdk-bundle-${AWS_SDK_BUNDLE_VERSION}.jar \
+    && mkdir -p /opt/bitnami \
+    && ln -s /opt/spark /opt/bitnami/spark
+
+USER spark

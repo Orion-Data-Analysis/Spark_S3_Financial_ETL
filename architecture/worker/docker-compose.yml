@@ -18,6 +18,9 @@ services:
     hostname: ${CELERY_HOSTNAME:-airflow-worker}
     ports:
       - "8793:8793"
+      - "7079:7079"
+      - "7080:7080"
+      - "4040:4040"
     command: bash -c 'airflow celery worker --autoscale 2,1 -H "$${CELERY_HOSTNAME}" -q "$${QUEUES}"'
     healthcheck:
       test: ["CMD-SHELL", "airflow jobs check --job-type WorkerJob --hostname \"$${CELERY_HOSTNAME}\""]

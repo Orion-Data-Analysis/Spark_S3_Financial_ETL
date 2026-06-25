@@ -6,29 +6,21 @@ services:
       context: ..
       dockerfile: Dockerfile
     container_name: spark-worker-${WORKER_ID}
-    hostname: spark-worker-${WORKER_ID}
+    network_mode: host
     command:
       - /opt/spark/bin/spark-class
       - org.apache.spark.deploy.worker.Worker
       - "spark://${SPARK_MASTER_CONNECT_HOST}:${SPARK_MASTER_PORT}"
       - --host
-      - "${SPARK_WORKER_HOST:-0.0.0.0}"
+      - "${SPARK_WORKER_HOST}"
       - --cores
       - "${SPARK_WORKER_CORES}"
       - --memory
       - "${SPARK_WORKER_MEMORY}"
       - --webui-port
       - "${SPARK_WORKER_WEBUI_PORT}"
-    ports:
-      - "${SPARK_WORKER_WEBUI_PORT}:${SPARK_WORKER_WEBUI_PORT}"
     volumes:
       - ${SPARK_LOGS_PATH}:/opt/spark/logs
       - ${SPARK_WORK_PATH}:/opt/spark/work
-    networks:
-      - spark-net
     restart: ${RESTART_POLICY}
 
-networks:
-  spark-net:
-    name: ${SPARK_NETWORK}
-    external: true

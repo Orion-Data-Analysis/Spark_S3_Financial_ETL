@@ -67,7 +67,7 @@ SPARK_DRIVER_HOST = os.getenv("SPARK_DRIVER_HOST", "")
 
 SPARK_CONF = {
     "spark.driver.port": "7079",
-    "spark.blockManager.port": "7080",
+    "spark.driver.blockManager.port": "7080",
     "spark.ui.port": "4040",
     "spark.driver.maxResultSize": SPARK_DRIVER_MAX_RESULT_SIZE,
     "spark.driver.bindAddress": "0.0.0.0",

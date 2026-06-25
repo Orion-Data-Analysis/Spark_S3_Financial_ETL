@@ -114,11 +114,19 @@ def compute_reconciliation_summary(spark, bucket: str, env: str, domain: str, in
     difference = raw_total - (staging_valid + staging_quarantine)
     status = "MATCH" if difference == 0 else "MISMATCH"
 
-    # Construct small DataFrame
-    reconciliation_data = [(ingestion_date, run_id, raw_total, staging_valid, staging_quarantine, difference, status)]
-    schema = ["ingestion_date", "run_id", "raw_total_rows", "staging_valid_rows", "staging_quarantine_rows", "reconciliation_difference", "reconciliation_status"]
-    
-    return spark.createDataFrame(reconciliation_data, schema=schema)
+    # Construct reconciliation DataFrame using Spark SQL to avoid launching Python workers on executors
+    # (prevents PYTHON_VERSION_MISMATCH when python version on driver is different from worker).
+    query = f"""
+        SELECT 
+            '{ingestion_date}' as ingestion_date,
+            '{run_id}' as run_id,
+            cast({raw_total} as long) as raw_total_rows,
+            cast({staging_valid} as long) as staging_valid_rows,
+            cast({staging_quarantine} as long) as staging_quarantine_rows,
+            cast({difference} as long) as reconciliation_difference,
+            '{status}' as reconciliation_status
+    """
+    return spark.sql(query)
 
 
 def register_table_in_catalog(spark, df: DataFrame, db_name: str, table_name: str, s3_path: str, write_mode: str) -> None:

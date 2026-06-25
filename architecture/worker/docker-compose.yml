@@ -4,7 +4,7 @@ x-airflow-common: &airflow-common
     args:
       EXTRA_REQUIREMENTS: ${EXTRA_REQUIREMENTS}
   env_file:
-    - ../.env
+    - ${ENV_FILE:-../.env}
   volumes:
     - airflow_logs:/opt/airflow/logs
     - airflow_config:/opt/airflow/config
